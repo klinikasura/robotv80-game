@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Game Mewarnai Anak</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f4f6ff;
+padding:15px;
+}
+
+h1{
+text-align:center;
+margin-bottom:15px;
+}
+
+.toolbar{
+display:flex;
+justify-content:center;
+gap:10px;
+flex-wrap:wrap;
+margin-bottom:15px;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+.palette{
+display:flex;
+justify-content:center;
+gap:8px;
+flex-wrap:wrap;
+margin-bottom:20px;
+}
+
+.color{
+width:40px;
+height:40px;
+border-radius:50%;
+cursor:pointer;
+border:3px solid white;
+}
+
+.color.active{
+border:3px solid black;
+}
+
+.gallery{
+display:grid;
+grid-template-columns:
+repeat(auto-fit,minmax(90px,1fr));
+gap:10px;
+margin-bottom:20px;
+}
+
+.thumb{
+background:white;
+padding:10px;
+border-radius:12px;
+text-align:center;
+cursor:pointer;
+box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+.thumb.active{
+border:3px solid #4f46e5;
+}
+
+.icon{
+font-size:32px;
+}
+
+#canvas{
+display:flex;
+justify-content:center;
+}
+
+svg{
+width:400px;
+max-width:100%;
+background:white;
+border-radius:15px;
+box-shadow:0 2px 10px rgba(0,0,0,.15);
+}
+
+.part{
+fill:white;
+stroke:black;
+stroke-width:2;
+cursor:pointer;
+}
+
+.stats{
+display:flex;
+justify-content:center;
+gap:20px;
+margin-bottom:15px;
+font-weight:bold;
+}
+
+.dark{
+background:#111827;
+color:white;
+}
+
+@media(max-width:768px){
+
+.gallery{
+grid-template-columns:
+repeat(4,1fr);
+}
+
+.icon{
+font-size:26px;
+}
+
+}
+
+</style>
+</head>
+<body>
+
+<h1>🎨 Game Mewarnai Anak</h1>
+
+<div class="stats">
+<div>⭐ Bintang:
+<span id="stars">0</span>
+</div>
+</div>
+
+<div class="toolbar">
+
+<button onclick="resetDrawing()">
+🔄 Reset
+</button>
+
+<button onclick="eraser()">
+🧽 Penghapus
+</button>
+
+<button onclick="toggleDark()">
+🌙 Dark
+</button>
+
+</div>
+
+<div class="palette">
+
+<div class="color active"
+style="background:red"
+data-color="red"></div>
+
+<div class="color"
+style="background:orange"
+data-color="orange"></div>
+
+<div class="color"
+style="background:yellow"
+data-color="yellow"></div>
+
+<div class="color"
+style="background:green"
+data-color="green"></div>
+
+<div class="color"
+style="background:blue"
+data-color="blue"></div>
+
+<div class="color"
+style="background:purple"
+data-color="purple"></div>
+
+<div class="color"
+style="background:pink"
+data-color="pink"></div>
+
+<div class="color"
+style="background:brown"
+data-color="brown"></div>
+
+<div class="color"
+style="background:black"
+data-color="black"></div>
+
+</div>
+
+<div class="gallery"
+id="gallery"></div>
+
+<div id="canvas"></div>
+
+<script>
+
+let currentColor="red";
+let stars=0;
+
+const colorNames={
+
+red:"Merah",
+orange:"Oranye",
+yellow:"Kuning",
+green:"Hijau",
+blue:"Biru",
+purple:"Ungu",
+pink:"Merah Muda",
+brown:"Coklat",
+black:"Hitam",
+white:"Putih"
+
+};
+
+function speak(text){
+
+speechSynthesis.cancel();
+
+const speech=
+new SpeechSynthesisUtterance(text);
+
+speech.lang="id-ID";
+
+speech.rate=0.9;
+
+speechSynthesis.speak(
+speech
+);
+
+}
+
+const galleryData=[
+
+["cat","🐱","Kucing"],
+["dog","🐶","Anjing"],
+["flower","🌸","Bunga"],
+["tree","🌳","Pohon"],
+["car","🚗","Mobil"],
+["bus","🚌","Bus"],
+["rocket","🚀","Roket"],
+["house","🏠","Rumah"]
+
+];
+
+const pictures={
+
+cat:`
+<svg viewBox="0 0 300 300">
+<circle class="part"
+cx="150"
+cy="150"
+r="70"/>
+<polygon class="part"
+points="95,95 120,40 140,95"/>
+<polygon class="part"
+points="160,95 180,40 205,95"/>
+</svg>
+`,
+
+dog:`
+<svg viewBox="0 0 300 300">
+<circle class="part"
+cx="150"
+cy="140"
+r="70"/>
+<ellipse class="part"
+cx="90"
+cy="90"
+rx="25"
+ry="45"/>
+<ellipse class="part"
+cx="210"
+cy="90"
+rx="25"
+ry="45"/>
+</svg>
+`,
+
+flower:`
+<svg viewBox="0 0 300 300">
+<circle class="part"
+cx="150"
+cy="150"
+r="30"/>
+<circle class="part"
+cx="150"
+cy="90"
+r="35"/>
+<circle class="part"
+cx="150"
+cy="210"
+r="35"/>
+<circle class="part"
+cx="90"
+cy="150"
+r="35"/>
+<circle class="part"
+cx="210"
+cy="150"
+r="35"/>
+</svg>
+`,
+
+tree:`
+<svg viewBox="0 0 300 300">
+<circle class="part"
+cx="150"
+cy="80"
+r="50"/>
+<circle class="part"
+cx="100"
+cy="120"
+r="40"/>
+<circle class="part"
+cx="200"
+cy="120"
+r="40"/>
+<rect class="part"
+x="125"
+y="140"
+width="50"
+height="120"/>
+</svg>
+`,
+
+car:`
+<svg viewBox="0 0 300 300">
+<rect class="part"
+x="60"
+y="120"
+width="180"
+height="70"/>
+<polygon class="part"
+points="90,120 130,80 200,80 230,120"/>
+<circle class="part"
+cx="100"
+cy="210"
+r="25"/>
+<circle class="part"
+cx="200"
+cy="210"
+r="25"/>
+</svg>
+`,
+
+bus:`
+<svg viewBox="0 0 300 300">
+<rect class="part"
+x="50"
+y="90"
+width="200"
+height="110"/>
+<circle class="part"
+cx="90"
+cy="220"
+r="20"/>
+<circle class="part"
+cx="210"
+cy="220"
+r="20"/>
+</svg>
+`,
+
+rocket:`
+<svg viewBox="0 0 300 300">
+<polygon class="part"
+points="150,40 190,120 150,260 110,120"/>
+<circle class="part"
+cx="150"
+cy="130"
+r="20"/>
+</svg>
+`,
+
+house:`
+<svg viewBox="0 0 300 300">
+<rect class="part"
+x="80"
+y="120"
+width="140"
+height="120"/>
+<polygon class="part"
+points="70,120 150,50 230,120"/>
+</svg>
+`
+
+};
+
+function checkFinish(){
+
+const parts=
+document.querySelectorAll(".part");
+
+const done=
+[...parts].every(
+p=>p.style.fill &&
+p.style.fill!="white"
+);
+
+if(done){
+
+stars++;
+
+document
+.getElementById("stars")
+.textContent=stars;
+
+speak(
+"Hebat. Gambar selesai."
+);
+
+}
+
+}
+
+function attachColoring(){
+
+document
+.querySelectorAll(".part")
+.forEach(part=>{
+
+part.onclick=()=>{
+
+part.style.fill=
+currentColor;
+
+speak(
+"Warna "+
+colorNames[currentColor]
+);
+
+checkFinish();
+
+};
+
+});
+
+}
+
+function loadPicture(name){
+
+document
+.getElementById("canvas")
+.innerHTML=
+pictures[name];
+
+attachColoring();
+
+}
+
+function resetDrawing(){
+
+document
+.querySelectorAll(".part")
+.forEach(p=>
+p.style.fill="white"
+);
+
+}
+
+function eraser(){
+
+currentColor="white";
+
+}
+
+function toggleDark(){
+
+document.body
+.classList.toggle("dark");
+
+}
+
+const gallery=
+document
+.getElementById("gallery");
+
+galleryData.forEach(item=>{
+
+gallery.innerHTML+=`
+
+<div class="thumb"
+data-picture="${item[0]}">
+
+<div class="icon">
+${item[1]}
+</div>
+
+<div>
+${item[2]}
+</div>
+
+</div>
+
+`;
+
+});
+
+document
+.querySelectorAll(".thumb")
+.forEach(t=>{
+
+t.onclick=()=>{
+
+document
+.querySelectorAll(".thumb")
+.forEach(x=>
+x.classList.remove(
+"active"
+));
+
+t.classList.add(
+"active"
+);
+
+loadPicture(
+t.dataset.picture
+);
+
+};
+
+});
+
+document
+.querySelectorAll(".color")
+.forEach(c=>{
+
+c.onclick=()=>{
+
+document
+.querySelectorAll(".color")
+.forEach(x=>
+x.classList.remove(
+"active"
+));
+
+c.classList.add(
+"active"
+);
+
+currentColor=
+c.dataset.color;
+
+speak(
+colorNames[
+currentColor
+]
+);
+
+};
+
+});
+
+loadPicture("cat");
+
+document
+.querySelector(".thumb")
+.classList.add(
+"active"
+);
+
+</script>
+
+</body>
+</html>
